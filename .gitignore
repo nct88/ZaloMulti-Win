@@ -1,0 +1,17 @@
+# ZaloMulti GitIgnore
+
+# Profiles and User Data
+C:/Zalo_Clone_Profiles/
+desktop_profiles/
+
+# PowerShell temporary files
+*.log
+*.tmp
+
+# IDE Settings
+.vscode/
+.gemini/
+
+# OS files
+Thumbs.db
+Desktop.ini
