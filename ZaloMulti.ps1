@@ -132,6 +132,13 @@ $Global:ImgTG.Source = Get-ZaloBitmap "telegram.png"
 $Global:ImgGH.Source = Get-ZaloBitmap "github.png"
 $Global:ImgWS.Source = Get-ZaloBitmap "website.png"
 
+# --- LOGIC BẢO VỆ BẢN QUYỀN (OBFUSCATED) ---
+function Get-LicenseInfo {
+    $enc = "QuG6o24gcXV54buBbiDCqSAyMDI2IGLhu59pIHRydW9uZy5pdC4gUGjDoXQgdHJp4buDbiB24bubaSDEkWFtIG3Dqi4="
+    $dec = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($enc))
+    return $dec
+}
+
 # --- CHỨC NĂNG SAO LƯU (EXPORT) ---
 function Export-ProfileUI {
     $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer }
@@ -560,4 +567,5 @@ for ($i=0; $i -lt $allArgs.Count; $i++) {
 
 # Chạy ứng dụng
 Update-AppUIList
+$Global:TxtVersion.Text = Get-LicenseInfo
 $Global:window.ShowDialog() | Out-Null
