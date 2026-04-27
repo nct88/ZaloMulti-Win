@@ -151,14 +151,32 @@
                             <Button Style="{DynamicResource ColorCircle}" Background="#6C5CE7" Tag="#6C5CE7" Name="Pal9"/>
                         </UniformGrid>
                         
-                        <Button Name="BtnAdd" Content="Thêm tài khoản" Style="{StaticResource AccentBtn}" FontSize="16" Margin="0,0,0,25"/>
+                        <Button Name="BtnAdd" Content="Thêm tài khoản" Style="{StaticResource AccentBtn}" FontSize="16" Margin="0,0,0,15"/>
+                        
+                        <Grid Margin="0,0,0,25">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Name="BtnExport" Content="📦 Sao lưu" Style="{StaticResource RoundBtn}" Grid.Column="0" Margin="0,0,5,0" FontSize="13"/>
+                            <Button Name="BtnImport" Content="📥 Nhập" Style="{StaticResource RoundBtn}" Grid.Column="1" Margin="5,0,0,0" FontSize="13"/>
+                        </Grid>
                         
                         <TextBlock Text="Đổi chủ đề Sáng/Tối" Foreground="{DynamicResource TextSec}" FontSize="14" Margin="0,0,0,8" HorizontalAlignment="Center"/>
                         <Border Background="{DynamicResource BgToggle}" CornerRadius="18" Padding="4" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
-                                <Button Name="BtnLight" Content="☀️" Width="40" Height="32" Style="{StaticResource ActionBtn}"/>
-                                <Button Name="BtnDark" Content="🌙" Width="40" Height="32" Style="{StaticResource ActionBtn}"/>
-                            </StackPanel>
+                            <Grid Width="80" Height="32">
+                                <!-- Thanh trượt highlight -->
+                                <Border Name="ThemeIndicator" Background="{DynamicResource AccentBlue}" Width="40" Height="32" CornerRadius="15" HorizontalAlignment="Left">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform X="0" />
+                                    </Border.RenderTransform>
+                                </Border>
+                                
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Name="BtnLight" Content="☀️" Width="40" Height="32" Style="{StaticResource ActionBtn}" Background="Transparent"/>
+                                    <Button Name="BtnDark" Content="🌙" Width="40" Height="32" Style="{StaticResource ActionBtn}" Background="Transparent"/>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </StackPanel>
 

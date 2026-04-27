@@ -98,11 +98,14 @@ $Global:window = [Windows.Markup.XamlReader]::Load($reader)
 
 # Ánh xạ các thành phần UI
 $Global:BtnAdd = $Global:window.FindName("BtnAdd")
+$Global:BtnExport = $Global:window.FindName("BtnExport")
+$Global:BtnImport = $Global:window.FindName("BtnImport")
 $Global:BtnKillAll = $Global:window.FindName("BtnKillAll")
 $Global:InstanceGrid = $Global:window.FindName("InstanceGrid")
 $Global:BtnClose = $Global:window.FindName("BtnClose")
 $Global:BtnLight = $Global:window.FindName("BtnLight")
 $Global:BtnDark = $Global:window.FindName("BtnDark")
+$Global:ThemeIndicator = $Global:window.FindName("ThemeIndicator")
 $Global:ImgLogo = $Global:window.FindName("ImgLogo")
 $Global:ImgFB = $Global:window.FindName("ImgFB")
 $Global:ImgTG = $Global:window.FindName("ImgTG")
@@ -129,6 +132,75 @@ $Global:ImgTG.Source = Get-ZaloBitmap "telegram.png"
 $Global:ImgGH.Source = Get-ZaloBitmap "github.png"
 $Global:ImgWS.Source = Get-ZaloBitmap "website.png"
 
+# --- CHỨC NĂNG SAO LƯU (EXPORT) ---
+function Export-ProfileUI {
+    $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer }
+    if ($profiles.Count -eq 0) { [System.Windows.MessageBox]::Show("Không tìm thấy profile nào để sao lưu!"); return }
+
+    # Menu chọn nhanh
+    $subWin = New-Object System.Windows.Window
+    $subWin.Title = "Chọn Profile Sao Lưu"
+    $subWin.Width = 300
+    $subWin.Height = 400
+    $subWin.WindowStartupLocation = "CenterOwner"
+    $subWin.Owner = $Global:window
+
+    $sp = New-Object System.Windows.Controls.StackPanel
+    $sp.Margin = 10
+
+    $lb = New-Object System.Windows.Controls.ListBox
+    $lb.Height = 300
+    foreach ($p in $profiles) { $lb.Items.Add($p.Name) }
+    $sp.Children.Add($lb)
+
+    $btn = New-Object System.Windows.Controls.Button
+    $btn.Content = "BẮT ĐẦU SAO LƯU"
+    $btn.Height = 40
+    $btn.Margin = "0,10,0,0"
+    $btn.Add_Click({ $subWin.DialogResult = $true; $subWin.Close() })
+    $sp.Children.Add($btn)
+
+    $subWin.Content = $sp
+    if ($subWin.ShowDialog() -and $lb.SelectedItem) {
+        $name = $lb.SelectedItem
+        $timestamp = Get-Date -Format "HHmmss-ddMMyy"
+        $fileNameFriendly = $name.ToLower().Replace(" ", "-")
+        
+        $save = New-Object Microsoft.Win32.SaveFileDialog
+        $save.Filter = "Zalo Profile Package (*.zlp)|*.zlp"
+        $save.FileName = "$fileNameFriendly-$timestamp.zlp"
+        
+        if ($save.ShowDialog()) {
+            $destZip = $save.FileName
+            Write-Host "Đang sao lưu $name..."
+            Compress-Archive -Path "$(Join-Path $Global:ProfileRoot $name)\*" -DestinationPath $destZip -Force
+            [System.Windows.MessageBox]::Show("Đã sao lưu thành công!`n$destZip")
+        }
+    }
+}
+
+# --- CHỨC NĂNG NHẬP (IMPORT) ---
+function Import-ProfileUI {
+    $open = New-Object Microsoft.Win32.OpenFileDialog
+    $open.Filter = "Zalo Profile Package (*.zlp)|*.zlp"
+    
+    if ($open.ShowDialog()) {
+        Add-Type -AssemblyName Microsoft.VisualBasic
+        $defaultName = [System.IO.Path]::GetFileNameWithoutExtension($open.FileName).Replace("Backup_Zalo_", "")
+        $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho profile mới:", "Nhập dữ liệu", $defaultName)
+        
+        if ($newName) {
+            $destPath = Join-Path $Global:ProfileRoot $newName
+            if (Test-Path $destPath) { [System.Windows.MessageBox]::Show("Tên này đã tồn tại!"); return }
+            
+            New-Item -ItemType Directory -Path $destPath -Force | Out-Null
+            Expand-Archive -Path $open.FileName -DestinationPath $destPath -Force
+            Update-AppUIList
+            [System.Windows.MessageBox]::Show("Nhập dữ liệu thành công!")
+        }
+    }
+}
+
 # Hỗ trợ: Cập nhật tài nguyên Brush
 function Set-GlobalBrush {
     param($key, $hex)
@@ -138,10 +210,15 @@ function Set-GlobalBrush {
     } catch { }
 }
 
-# Hỗ trợ: Chuyển đổi chủ đề
+# Hỗ trợ: Chuyển đổi chủ đề + Animation
 function Set-AppTheme {
     param($mode)
     try {
+        $anim = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $anim.Duration = [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(250))
+        $anim.EasingFunction = New-Object System.Windows.Media.Animation.CubicEase
+        $anim.EasingFunction.EasingMode = "EaseInOut"
+
         if ($mode -eq "Dark") {
             Set-GlobalBrush "BgDark" "#0A0A0A"
             Set-GlobalBrush "BgSidebar" "#18191A"
@@ -150,11 +227,13 @@ function Set-AppTheme {
             Set-GlobalBrush "BorderBrush" "#3E4042"
             Set-GlobalBrush "TextMain" "#E4E6EB"
             Set-GlobalBrush "TextSec" "#B0B3B8"
-            $Global:BtnDark.Background = $Global:window.Resources["BgToggle"]
-            $Global:BtnDark.BorderBrush = $Global:window.Resources["AccentBlue"]
-            $Global:BtnDark.BorderThickness = 1
-            $Global:BtnLight.Background = [System.Windows.Media.Brushes]::Transparent
-            $Global:BtnLight.BorderThickness = 0
+            
+            # Animation trượt sang phải (40px)
+            $anim.To = 40
+            $Global:ThemeIndicator.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $anim)
+            
+            $Global:BtnDark.Foreground = [System.Windows.Media.Brushes]::White
+            $Global:BtnLight.Foreground = $Global:window.Resources["TextSec"]
         } else {
             Set-GlobalBrush "BgDark" "#F0F2F5"
             Set-GlobalBrush "BgSidebar" "#FFFFFF"
@@ -163,11 +242,13 @@ function Set-AppTheme {
             Set-GlobalBrush "BorderBrush" "#CED0D4"
             Set-GlobalBrush "TextMain" "#050505"
             Set-GlobalBrush "TextSec" "#65676B"
-            $Global:BtnLight.Background = $Global:window.Resources["BgToggle"]
-            $Global:BtnLight.BorderBrush = $Global:window.Resources["AccentBlue"]
-            $Global:BtnLight.BorderThickness = 1
-            $Global:BtnDark.Background = [System.Windows.Media.Brushes]::Transparent
-            $Global:BtnDark.BorderThickness = 0
+            
+            # Animation trượt sang trái (0px)
+            $anim.To = 0
+            $Global:ThemeIndicator.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $anim)
+            
+            $Global:BtnLight.Foreground = [System.Windows.Media.Brushes]::White
+            $Global:BtnDark.Foreground = $Global:window.Resources["TextSec"]
         }
     } catch { }
 }
@@ -320,12 +401,25 @@ function Update-AppUIList {
 
         $delBorder.Add_MouseDown({
             $targetName = $this.Tag
-            $res = [System.Windows.MessageBox]::Show("Bạn có chắc chắn muốn xóa tài khoản '$targetName'?", "Xác nhận xóa", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning)
+            $msg = "Để xóa tài khoản '$targetName', hệ thống cần đóng tất cả các ứng dụng Zalo đang chạy để tránh lỗi.`n`nBạn có đồng ý đóng tất cả Zalo và xóa vĩnh viễn tài khoản này không?"
+            $res = [System.Windows.MessageBox]::Show($msg, "Xác nhận xóa & Đóng Zalo", [System.Windows.MessageBoxButton]::YesNo, [System.Windows.MessageBoxImage]::Warning)
+            
             if ($res -eq "Yes") {
-                $delPath = Join-Path $Global:ProfileRoot $targetName
-                if (Test-Path $delPath) {
-                    Remove-Item -Path $delPath -Recurse -Force | Out-Null
-                    Update-AppUIList
+                try {
+                    # 1. Tự động đóng tất cả Zalo đang chạy
+                    Write-Host "Đang đóng các tiến trình Zalo..." -ForegroundColor Yellow
+                    Get-Process Zalo -ErrorAction SilentlyContinue | Stop-Process -Force
+                    Start-Sleep -Milliseconds 500 # Chờ một chút để giải phóng file
+
+                    # 2. Xóa thư mục profile
+                    $delPath = Join-Path $Global:ProfileRoot $targetName
+                    if (Test-Path $delPath) {
+                        Remove-Item -Path $delPath -Recurse -Force -ErrorAction Stop
+                        Update-AppUIList
+                        [System.Windows.MessageBox]::Show("Đã đóng Zalo và xóa tài khoản '$targetName' thành công.")
+                    }
+                } catch {
+                    [System.Windows.MessageBox]::Show("Có lỗi xảy ra: $($_.Exception.Message)`n`nHãy thử đóng Zalo thủ công và thực hiện lại.", "Lỗi", 0, 16)
                 }
             }
         })
@@ -400,6 +494,8 @@ function Update-AppUIList {
 # Trình xử lý sự kiện
 $Global:BtnLight.Add_Click({ Set-AppTheme "Light" })
 $Global:BtnDark.Add_Click({ Set-AppTheme "Dark" })
+$Global:BtnExport.Add_Click({ Export-ProfileUI })
+$Global:BtnImport.Add_Click({ Import-ProfileUI })
 Update-AppAccent "#74B9FF"
 
 foreach ($i in (1..9)) {
