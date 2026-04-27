@@ -30,6 +30,9 @@ $Global:FontPath = "file:///$($Global:AppPath.Replace('\','/'))/Assets/#Pin-Sans
 # Đường dẫn mặc định
 $Global:ProfileRoot = "C:\Zalo_Clone_Profiles"
 $CustomPathFile = Join-Path $Global:AppPath "custom_path.txt"
+$Global:SettingsFile = Join-Path $Global:AppPath "settings.json"
+$Global:CurrentTheme = "Dark"
+$Global:CurrentAccent = "#74B9FF"
 
 # Tải hoặc hỏi đường dẫn tùy chỉnh
 if (Test-Path $CustomPathFile) {
@@ -217,12 +220,27 @@ function Set-GlobalBrush {
     } catch { }
 }
 
+function Save-AppSettings {
+    $settings = @{
+        Theme = $Global:CurrentTheme
+        Accent = $Global:CurrentAccent
+    }
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($Global:SettingsFile, ($settings | ConvertTo-Json), $utf8NoBom)
+}
+
 # Hỗ trợ: Chuyển đổi chủ đề + Animation
 function Set-AppTheme {
-    param($mode)
+    param($mode, $isInitial = $false)
     try {
+        $Global:CurrentTheme = $mode
         $anim = New-Object System.Windows.Media.Animation.DoubleAnimation
-        $anim.Duration = [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(250))
+        if ($isInitial) {
+            $anim.Duration = [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(0))
+        } else {
+            $anim.Duration = [System.Windows.Duration]::new([TimeSpan]::FromMilliseconds(250))
+            Save-AppSettings
+        }
         $anim.EasingFunction = New-Object System.Windows.Media.Animation.CubicEase
         $anim.EasingFunction.EasingMode = "EaseInOut"
 
@@ -262,8 +280,10 @@ function Set-AppTheme {
 
 # Hỗ trợ: Cập nhật màu nhấn
 function Update-AppAccent {
-    param($hex)
+    param($hex, $isInitial = $false)
     try {
+        $Global:CurrentAccent = $hex
+        if (-not $isInitial) { Save-AppSettings }
         $c1 = [System.Drawing.ColorTranslator]::FromHtml($hex)
         $c2 = [System.Drawing.Color]::FromArgb(255, [int]($c1.R * 0.7), [int]($c1.G * 0.7), [int]($c1.B * 0.7))
         
@@ -503,11 +523,23 @@ function Update-AppUIList {
 }
 
 # Trình xử lý sự kiện
+# Khôi phục cài đặt từ file
+if (Test-Path $Global:SettingsFile) {
+    try {
+        $saved = Get-Content $Global:SettingsFile -Raw | ConvertFrom-Json
+        $Global:CurrentTheme = $saved.Theme
+        $Global:CurrentAccent = $saved.Accent
+    } catch { }
+}
+
+# Áp dụng cài đặt ban đầu
+Set-AppTheme $Global:CurrentTheme -isInitial $true
+Update-AppAccent $Global:CurrentAccent -isInitial $true
+
 $Global:BtnLight.Add_Click({ Set-AppTheme "Light" })
 $Global:BtnDark.Add_Click({ Set-AppTheme "Dark" })
 $Global:BtnExport.Add_Click({ Export-ProfileUI })
 $Global:BtnImport.Add_Click({ Import-ProfileUI })
-Update-AppAccent "#74B9FF"
 
 foreach ($i in (1..9)) {
     $btn = $Global:window.FindName("Pal$i")
