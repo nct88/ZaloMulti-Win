@@ -23,7 +23,7 @@ if ($consolePtr -ne [IntPtr]::Zero) {
 }
 
 # Cấu hình toàn cầu
-$Global:Version = "1.0.1" # Phiên bản hiện tại
+$Global:Version = "1.0.2" # Phiên bản mới sửa lỗi shortcut
 $Global:AppPath = $PSScriptRoot
 $Global:IconFolder = Join-Path $Global:AppPath "Assets"
 $Global:FontPath = "file:///$($Global:AppPath.Replace('\','/'))/Assets/#Pin-Sans-Regular"
@@ -285,7 +285,7 @@ function New-AppShortcut {
         $batPath = Join-Path $batFolder "$name.bat"
         
         $batContent = "@echo off`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$($MyInvocation.MyCommand.Definition)`" -LaunchInstance `"$name`""
-        $batContent | Set-Content $batPath -Force -Encoding ASCII
+        $batContent | Set-Content $batPath -Force -Encoding UTF8
 
         $WshShell = New-Object -ComObject WScript.Shell
         $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
@@ -558,9 +558,18 @@ for ($i=0; $i -lt $allArgs.Count; $i++) {
     if ($allArgs[$i] -eq "-LaunchInstance") {
         $targetName = $allArgs[$i+1]
         if ($targetName) {
-            $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer } | Sort-Object CreationTime
-            $idx = [int]($targetName -replace "Zalo ","") - 1
-            if ($idx -ge 0 -and $idx -lt $profiles.Count) { Start-ZaloInstance $profiles[$idx].Name }
+            # Kiểm tra xem profile có tồn tại không trước khi khởi chạy
+            if (Test-Path (Join-Path $Global:ProfileRoot $targetName)) {
+                Start-ZaloInstance $targetName
+            } else {
+                # Fallback cho các bản cũ hoặc lỗi đặt tên
+                $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer } | Sort-Object CreationTime
+                $cleanName = $targetName -replace "Zalo ","" -replace "Tài khoản ",""
+                if ($cleanName -as [int]) {
+                    $idx = [int]$cleanName - 1
+                    if ($idx -ge 0 -and $idx -lt $profiles.Count) { Start-ZaloInstance $profiles[$idx].Name }
+                }
+            }
             exit
         }
     }

@@ -15,6 +15,11 @@
   <img src="Assets/zalo_10_XamBac.ico" width="48" height="48" />
 </p>
 
+## ✨ Tính năng mới (Cập nhật 28/04/2026 - v1.0.2)
+- **Sửa lỗi Shortcut tiếng Việt**: Khắc phục hoàn toàn lỗi không tạo được lối tắt khi tên tài khoản có dấu tiếng Việt.
+- **Sửa lỗi khởi chạy**: Đảm bảo Shortcut mở đúng profile tương ứng.
+- **Tối ưu hóa mã hóa**: Chuyển đổi toàn bộ hệ thống sang UTF-8 để hỗ trợ tiếng Việt tốt nhất.
+
 ## ✨ Tính năng mới (Cập nhật 28/04/2026 - v1.0.1)
 - **Cập nhật tự động (Auto-Update)**: Hệ thống tự động kiểm tra và thông báo khi có bản vá lỗi hoặc tính năng mới từ GitHub.
 - **Sửa lỗi "Không phản hồi"**: Khắc phục triệt để lỗi nhấn nút "Mở tài khoản" nhưng không có hiện tượng gì xảy ra.
