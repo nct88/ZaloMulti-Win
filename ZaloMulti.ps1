@@ -373,9 +373,8 @@ del "%~f0"
     }
 }
 
-function Check-ForUpdates {
+function Test-ForUpdates {
     $remoteVersionUrl = "https://raw.githubusercontent.com/congtruongitvn/ZaloMulti-Win/main/version.txt"
-    $currentUrl = "https://github.com/congtruongitvn/ZaloMulti-Win"
     
     # Chạy ngầm việc kiểm tra để không làm chậm lúc mở app
     Start-Job -ScriptBlock {
@@ -567,7 +566,7 @@ for ($i=0; $i -lt $allArgs.Count; $i++) {
     }
 }
 
-Check-ForUpdates
+Test-ForUpdates
 Update-AppUIList
 $Global:TxtVersion.Text = "Phiên bản $Global:Version"
 $Global:window.ShowDialog() | Out-Null
