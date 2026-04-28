@@ -140,27 +140,29 @@ $Global:ImgWS.Source = Get-ZaloBitmap "website.png"
 
 # --- CHỨC NĂNG SAO LƯU ---
 function Export-ProfileUI {
-    $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer }
-    if ($profiles.Count -eq 0) { [System.Windows.MessageBox]::Show("Không tìm thấy profile nào để sao lưu!"); return }
+    $profiles = Get-ChildItem $Global:ProfileRoot -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer }
+    if (-not $profiles -or $profiles.Count -eq 0) { [System.Windows.MessageBox]::Show("Không tìm thấy profile nào để sao lưu!", "Sao lưu", 0, 48); return }
 
     $subWin = New-Object System.Windows.Window
     $subWin.Title = "Chọn Profile Sao Lưu"
-    $subWin.Width = 300
-    $subWin.Height = 400
+    $subWin.Width = 320; $subWin.Height = 420
     $subWin.WindowStartupLocation = "CenterOwner"
     $subWin.Owner = $Global:window
+    $subWin.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#242526")
 
     $sp = New-Object System.Windows.Controls.StackPanel
-    $sp.Margin = 10
+    $sp.Margin = 15
+    $lbl = New-Object System.Windows.Controls.TextBlock
+    $lbl.Text = "Chọn tài khoản cần sao lưu:"; $lbl.Foreground = "White"; $lbl.FontSize = 14; $lbl.Margin = "0,0,0,10"
+    $sp.Children.Add($lbl)
     $lb = New-Object System.Windows.Controls.ListBox
-    $lb.Height = 300
-    foreach ($p in $profiles) { $lb.Items.Add($p.Name) }
+    $lb.Height = 280; $lb.Background = [System.Windows.Media.BrushConverter]::new().ConvertFromString("#18191A")
+    $lb.Foreground = "White"; $lb.FontSize = 13
+    foreach ($p in $profiles) { $lb.Items.Add($p.Name) | Out-Null }
     $sp.Children.Add($lb)
 
     $btn = New-Object System.Windows.Controls.Button
-    $btn.Content = "BẮT ĐẦU SAO LƯU"
-    $btn.Height = 40
-    $btn.Margin = "0,10,0,0"
+    $btn.Content = "📦 BẮT ĐẦU SAO LƯU"; $btn.Height = 38; $btn.Margin = "0,10,0,0"; $btn.FontSize = 13
     $btn.Add_Click({ $subWin.DialogResult = $true; $subWin.Close() })
     $sp.Children.Add($btn)
 
@@ -175,9 +177,15 @@ function Export-ProfileUI {
         $save.FileName = "$fileNameFriendly-$timestamp.zlp"
         
         if ($save.ShowDialog()) {
-            $destZip = $save.FileName
-            Compress-Archive -Path "$(Join-Path $Global:ProfileRoot $name)\*" -DestinationPath $destZip -Force
-            [System.Windows.MessageBox]::Show("Đã sao lưu thành công!`n$destZip")
+            try {
+                $sourcePath = Join-Path $Global:ProfileRoot $name
+                $destZip = $save.FileName
+                [System.Windows.MessageBox]::Show("Đang sao lưu... Vui lòng chờ.`nQuá trình này có thể mất vài phút tùy dung lượng.", "Sao lưu", 0, 64)
+                Compress-Archive -Path "$sourcePath\*" -DestinationPath $destZip -Force
+                [System.Windows.MessageBox]::Show("Sao lưu thành công!`n$destZip", "Hoàn tất", 0, 64)
+            } catch {
+                [System.Windows.MessageBox]::Show("Lỗi khi sao lưu:`n$($_.Exception.Message)", "Lỗi sao lưu", 0, 16)
+            }
         }
     }
 }
@@ -186,20 +194,25 @@ function Export-ProfileUI {
 function Import-ProfileUI {
     $open = New-Object Microsoft.Win32.OpenFileDialog
     $open.Filter = "Zalo Profile Package (*.zlp)|*.zlp"
+    $open.Title = "Chọn file sao lưu (.zlp) để nhập"
     
     if ($open.ShowDialog()) {
-        Add-Type -AssemblyName Microsoft.VisualBasic
-        $defaultName = [System.IO.Path]::GetFileNameWithoutExtension($open.FileName).Replace("Backup_Zalo_", "")
-        $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho profile mới:", "Nhập dữ liệu", $defaultName)
-        
-        if ($newName) {
-            $destPath = Join-Path $Global:ProfileRoot $newName
-            if (Test-Path $destPath) { [System.Windows.MessageBox]::Show("Tên này đã tồn tại!"); return }
+        try {
+            Add-Type -AssemblyName Microsoft.VisualBasic
+            $defaultName = [System.IO.Path]::GetFileNameWithoutExtension($open.FileName).Replace("Backup_Zalo_", "")
+            $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho tài khoản mới:", "Nhập dữ liệu", $defaultName)
             
-            New-Item -ItemType Directory -Path $destPath -Force | Out-Null
-            Expand-Archive -Path $open.FileName -DestinationPath $destPath -Force
-            Update-AppUIList
-            [System.Windows.MessageBox]::Show("Nhập dữ liệu thành công!")
+            if ($newName) {
+                $destPath = Join-Path $Global:ProfileRoot $newName
+                if (Test-Path $destPath) { [System.Windows.MessageBox]::Show("Tên '$newName' đã tồn tại! Vui lòng chọn tên khác.", "Trùng tên", 0, 48); return }
+                
+                New-Item -ItemType Directory -Path $destPath -Force | Out-Null
+                Expand-Archive -Path $open.FileName -DestinationPath $destPath -Force
+                Update-AppUIList
+                [System.Windows.MessageBox]::Show("Nhập dữ liệu thành công!`nTài khoản '$newName' đã sẵn sàng.", "Hoàn tất", 0, 64)
+            }
+        } catch {
+            [System.Windows.MessageBox]::Show("Lỗi khi nhập dữ liệu:`n$($_.Exception.Message)", "Lỗi nhập", 0, 16)
         }
     }
 }
