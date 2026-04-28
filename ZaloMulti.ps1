@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # ZALỎMULTI - PHIÊN BẢN HOÀN THIỆN
 # BẢN QUYỀN TRUONG.IT
 # ============================================================
@@ -386,16 +386,8 @@ function Update-AppSilently {
             # Tạo file .bat để copy đè và khởi động lại
             $currentScript = Join-Path $Global:AppPath "ZaloMulti.ps1"
             $updateBat = Join-Path $env:TEMP "update_zalo_multi.bat"
-            $batContent = @"
-@echo off
-title Dang cap nhat ZaloMulti...
-timeout /t 1 /nobreak > nul
-xcopy /s /y /q "$tempExtract\*" "$($Global:AppPath)\"
-start "" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "$currentScript"
-rmdir /s /q "$tempExtract"
-del "$tempZip"
-del "%~f0"
-"@
+            $destPath = $Global:AppPath
+            $batContent = "@echo off`ntitle Dang cap nhat ZaloMulti...`ntimeout /t 1 /nobreak > nul`nxcopy /s /y /q `"$tempExtract\*`" `"$destPath\`"`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$currentScript`"`nrmdir /s /q `"$tempExtract`"`ndel `"$tempZip`"`ndel `"%~f0`""
             $utf8NoBom = New-Object System.Text.UTF8Encoding $false
             [System.IO.File]::WriteAllText($updateBat, $batContent, $utf8NoBom)
             Start-Process $updateBat -WindowStyle Hidden
@@ -415,14 +407,7 @@ del "%~f0"
             
             $currentScript = Join-Path $Global:AppPath "ZaloMulti.ps1"
             $updateBat = Join-Path $env:TEMP "update_zalo_multi.bat"
-            $batContent = @"
-@echo off
-title Dang cap nhat ZaloMulti...
-timeout /t 1 /nobreak > nul
-move /y "$tempFile" "$currentScript"
-start "" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File "$currentScript"
-del "%~f0"
-"@
+            $batContent = "@echo off`ntitle Dang cap nhat ZaloMulti...`ntimeout /t 1 /nobreak > nul`nmove /y `"$tempFile`" `"$currentScript`"`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$currentScript`"`ndel `"%~f0`""
             $utf8NoBom = New-Object System.Text.UTF8Encoding $false
             [System.IO.File]::WriteAllText($updateBat, $batContent, $utf8NoBom)
             Start-Process $updateBat -WindowStyle Hidden
