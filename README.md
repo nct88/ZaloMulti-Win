@@ -1,4 +1,4 @@
-# 🚀 ZalỏMulti - Quản lý đa tài khoản Zalo Desktop (v2.0.1)
+# 🚀 ZalỏMulti - Quản lý đa tài khoản Zalo Desktop (v2.0.2)
 
 **ZalỏMulti** là một công cụ mạnh mẽ, gọn nhẹ và thẩm mỹ dành cho người dùng Windows, giúp quản lý và chạy đồng thời nhiều tài khoản Zalo Desktop trên cùng một máy tính một cách dễ dàng.
 
@@ -14,6 +14,12 @@
   <img src="Assets/zalo_09_Nau.ico" width="48" height="48" alt="Nâu" />
   <img src="Assets/zalo_10_XamBac.ico" width="48" height="48" alt="Xám bạc" />
 </p>
+
+## ✨ Tính năng mới (Cập nhật 28/04/2026 - v2.0.2)
+
+- **Khởi chạy từ Shortcut cực nhanh**: Khi mở Zalo từ Desktop, script không load giao diện XAML nữa mà chạy trực tiếp → mở Zalo gần như tức thì.
+- **Sửa lỗi con trỏ xoay xoay**: Khắc phục hiện tượng con trỏ chuột nhấp nháy liên tục khi mở Zalo từ Shortcut Desktop.
+- **Tối ưu hiệu suất**: Script thoát ngay sau khi mở Zalo, không chạy ngầm chiếm tài nguyên.
 
 ## ✨ Tính năng mới (Cập nhật 28/04/2026 - v2.0.1)
 

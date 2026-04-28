@@ -1,4 +1,3 @@
-- Sửa lỗi tạo Shortcut bị lỗi khi tên tài khoản có dấu tiếng Việt (ả, ạ, ể, ồ...).
-- File Shortcut giờ dùng tên không dấu để tương thích mọi Windows locale.
-- Thêm chcp 65001 vào file .bat để đảm bảo UTF-8 khi khởi chạy.
-- Tự động sửa các file .bat cũ thiếu encoding UTF-8.
+- Khởi chạy Zalo từ Shortcut cực nhanh (không load giao diện).
+- Sửa lỗi con trỏ chuột xoay xoay nhấp nháy khi mở từ Shortcut.
+- Tối ưu hiệu suất: Script thoát ngay sau khi mở Zalo, không chạy ngầm.

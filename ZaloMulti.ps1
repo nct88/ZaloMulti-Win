@@ -25,7 +25,7 @@ trap {
 }
 
 # Cấu hình toàn cầu
-$Global:Version = "2.0.1" # Sửa lỗi Shortcut tiếng Việt
+$Global:Version = "2.0.2" # Tối ưu khởi chạy từ Shortcut
 $Global:AppPath = $PSScriptRoot
 $Global:IconFolder = Join-Path $Global:AppPath "Assets"
 $Global:FontPath = "file:///$($Global:AppPath.Replace('\','/'))/Assets/#Pin-Sans-Regular"
@@ -90,6 +90,70 @@ try {
         New-Item -ItemType Directory -Path $Global:ProfileRoot -Force | Out-Null
     }
 }
+
+# === FAST PATH: Khởi chạy nhanh từ Shortcut (không load UI) ===
+$allArgs = $MyInvocation.BoundParameters.Values + $args
+$launchIdx = -1
+for ($i=0; $i -lt $allArgs.Count; $i++) {
+    if ($allArgs[$i] -eq "-LaunchInstance") { $launchIdx = $i; break }
+}
+if ($launchIdx -ge 0) {
+    $targetName = $allArgs[$launchIdx + 1]
+    if ($targetName) {
+        $profilePath = $null
+        if (Test-Path (Join-Path $Global:ProfileRoot $targetName)) {
+            $profilePath = Join-Path $Global:ProfileRoot $targetName
+        } else {
+            # Fallback cho bản cũ dùng số thứ tự
+            $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer } | Sort-Object CreationTime
+            $cleanName = $targetName -replace "Zalo ","" -replace "Tài khoản ",""
+            if ($cleanName -as [int]) {
+                $idx = [int]$cleanName - 1
+                if ($idx -ge 0 -and $idx -lt $profiles.Count) {
+                    $profilePath = $profiles[$idx].FullName
+                    $targetName = $profiles[$idx].Name
+                }
+            }
+        }
+        if ($profilePath) {
+            $roamingPath = Join-Path $profilePath "AppData\Roaming"
+            $localPath = Join-Path $profilePath "AppData\Local"
+            $zaloDataPath = Join-Path $roamingPath "ZaloData"
+            if (-not (Test-Path $roamingPath)) { New-Item -ItemType Directory -Path $roamingPath -Force | Out-Null }
+            if (-not (Test-Path $localPath)) { New-Item -ItemType Directory -Path $localPath -Force | Out-Null }
+            if (-not (Test-Path $zaloDataPath)) { New-Item -ItemType Directory -Path $zaloDataPath -Force | Out-Null }
+
+            $randomPart1 = -join ((1..19) | ForEach-Object { Get-Random -Minimum 0 -Maximum 10 })
+            $timestamp = [DateTimeOffset]::Now.ToUnixTimeMilliseconds()
+            $randomHash = [System.Guid]::NewGuid().ToString("n")
+            "$randomPart1.$timestamp.$randomHash" | Set-Content (Join-Path $roamingPath "z_u.txt") -Force -Encoding ASCII
+
+            $deviceId = [System.Guid]::NewGuid().ToString().ToUpper()
+            $storageContent = @{ deviceId = $deviceId } | ConvertTo-Json -Compress
+            $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText((Join-Path $zaloDataPath "storage.json"), $storageContent, $utf8NoBom)
+
+            $configPath = Join-Path $zaloDataPath "config.json"
+            if (-not (Test-Path $configPath)) {
+                $configContent = @{ zalo_installed = $timestamp } | ConvertTo-Json -Compress
+                [System.IO.File]::WriteAllText($configPath, $configContent, $utf8NoBom)
+            }
+
+            $processInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $processInfo.FileName = $Global:ZaloPath
+            $processInfo.UseShellExecute = $false
+            $processInfo.EnvironmentVariables["USERPROFILE"] = $profilePath
+            $processInfo.EnvironmentVariables["APPDATA"] = $roamingPath
+            $processInfo.EnvironmentVariables["LOCALAPPDATA"] = $localPath
+            try {
+                $proc = [System.Diagnostics.Process]::Start($processInfo)
+                if ($proc) { $proc.Id | Set-Content (Join-Path $profilePath "pid.txt") -Force -Encoding ASCII }
+            } catch { }
+        }
+        exit
+    }
+}
+# === END FAST PATH ===
 
 # Tải và nạp XAML
 $xamlRaw = Get-Content (Join-Path $Global:AppPath "ZaloMulti.xaml") -Raw -Encoding UTF8
@@ -752,27 +816,7 @@ $Global:BtnKillAll.Add_Click({
 $Global:BtnClose.Add_Click({ $Global:window.Close() })
 $Global:window.Add_MouseLeftButtonDown({ $this.DragMove() })
 
-$allArgs = $MyInvocation.BoundParameters.Values + $args
-for ($i=0; $i -lt $allArgs.Count; $i++) {
-    if ($allArgs[$i] -eq "-LaunchInstance") {
-        $targetName = $allArgs[$i+1]
-        if ($targetName) {
-            # Kiểm tra xem profile có tồn tại không trước khi khởi chạy
-            if (Test-Path (Join-Path $Global:ProfileRoot $targetName)) {
-                Start-ZaloInstance $targetName
-            } else {
-                # Fallback cho các bản cũ hoặc lỗi đặt tên
-                $profiles = Get-ChildItem $Global:ProfileRoot | Where-Object { $_.PSIsContainer } | Sort-Object CreationTime
-                $cleanName = $targetName -replace "Zalo ","" -replace "Tài khoản ",""
-                if ($cleanName -as [int]) {
-                    $idx = [int]$cleanName - 1
-                    if ($idx -ge 0 -and $idx -lt $profiles.Count) { Start-ZaloInstance $profiles[$idx].Name }
-                }
-            }
-            exit
-        }
-    }
-}
+# (Khởi chạy nhanh từ Shortcut đã được xử lý ở đầu script — xem FAST PATH)
 
 Test-ForUpdates
 Repair-OldShortcuts
