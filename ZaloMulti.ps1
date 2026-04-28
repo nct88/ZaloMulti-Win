@@ -5,7 +5,7 @@
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
 
-# Logic ẩn cửa sổ Terminal
+# Logic ẩn cửa sổ Terminal (sẽ gọi sau khi XAML load thành công)
 $Win32Code = @"
 using System;
 using System.Runtime.InteropServices;
@@ -17,9 +17,11 @@ public class Win32 {
 }
 "@
 Add-Type -TypeDefinition $Win32Code -ErrorAction SilentlyContinue
-$consolePtr = [Win32]::GetConsoleWindow()
-if ($consolePtr -ne [IntPtr]::Zero) {
-    [Win32]::ShowWindow($consolePtr, 0)
+
+# Bẫy lỗi toàn cục — hiện MessageBox nếu crash thay vì tắt im lặng
+trap {
+    [System.Windows.MessageBox]::Show("ZaloMulti gặp lỗi khởi động:`n`n$($_.Exception.Message)`n`nFile: $($_.InvocationInfo.ScriptName)`nDòng: $($_.InvocationInfo.ScriptLineNumber)", "Lỗi ZaloMulti", 0, 16)
+    exit 1
 }
 
 # Cấu hình toàn cầu
@@ -95,6 +97,12 @@ $xamlRaw = $xamlRaw.Replace("__FONT_PATH__", $Global:FontPath)
 [xml]$xamlContent = $xamlRaw
 $reader = New-Object System.Xml.XmlNodeReader $xamlContent
 $Global:window = [Windows.Markup.XamlReader]::Load($reader)
+
+# Ẩn cửa sổ Terminal SAU KHI XAML load thành công
+$consolePtr = [Win32]::GetConsoleWindow()
+if ($consolePtr -ne [IntPtr]::Zero) {
+    [Win32]::ShowWindow($consolePtr, 0)
+}
 
 # Ánh xạ UI
 $Global:BtnAdd = $Global:window.FindName("BtnAdd")
