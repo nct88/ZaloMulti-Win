@@ -355,6 +355,15 @@
                         <p>Đây là hành vi bình thường của Zalo. Khi đăng nhập trên profile Clone lần đầu, Zalo coi đó là thiết bị mới nên cần thời gian đồng bộ lại. <strong>Hãy đợi 5–10 phút</strong> sau khi đăng nhập, không tắt Zalo giữa chừng. Nếu vẫn thất bại, hãy đăng xuất rồi đăng nhập lại.</p>
                     </div>
                 </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+                        Mở Clone xong không gõ được tiếng Việt (Unikey bị lỗi)?
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Đây là xung đột giữa <strong>Zalo (Electron)</strong> và <strong>Unikey</strong>, không phải lỗi của ZalỏMulti. Khi Zalo clone khởi chạy, Electron đăng ký keyboard hook mới có thể xung đột với Unikey. <strong>Cách khắc phục</strong>: Nhấn chuột phải vào icon Unikey ở khay hệ thống → chọn <em>Khởi động lại</em>, hoặc tắt Unikey rồi mở lại. Bạn cũng có thể thử chuyển sang <strong>EVKey</strong> (tương thích tốt hơn với Electron).</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

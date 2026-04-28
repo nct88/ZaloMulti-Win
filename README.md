@@ -131,6 +131,7 @@ Nếu bạn gặp lỗi trong quá trình sử dụng, hãy thử các cách sau
 4. **Zalo Desktop**: Đảm bảo bạn đã cài đặt bản Zalo Desktop chính thức từ trang chủ.
 5. **Zalo đồng bộ tin nhắn thất bại**: Đây là hành vi bình thường. Khi đăng nhập trên profile Clone lần đầu, Zalo coi đó là thiết bị mới nên cần thời gian đồng bộ lại. Hãy **đợi 5–10 phút** sau khi đăng nhập, không tắt Zalo giữa chừng. Nếu vẫn thất bại, hãy đăng xuất rồi đăng nhập lại.
 6. **Cơ chế đăng nhập nhiều tài khoản**: ZalỏMulti sử dụng kỹ thuật **Điều hướng biến môi trường** (Environment Variables Redirection). Mỗi tài khoản được tạo một thư mục riêng, khi mở Zalo ứng dụng sẽ trỏ các biến `USERPROFILE`, `APPDATA`, `LOCALAPPDATA` vào thư mục đó. Zalo nghĩ rằng nó đang chạy trên một người dùng Windows mới — hoàn toàn độc lập, không can thiệp hay crack Zalo gốc.
+7. **Mở Clone xong không gõ được tiếng Việt (Unikey)**: Đây là xung đột giữa Zalo (Electron) và Unikey, không phải lỗi của ZalỏMulti. Cách khắc phục: Nhấn chuột phải vào icon Unikey ở khay hệ thống → chọn **Khởi động lại**, hoặc tắt Unikey rồi mở lại. Có thể thử chuyển sang **EVKey** (tương thích tốt hơn với Electron).
 
 ## 🤝 Đóng góp & Liên hệ
 
