@@ -589,8 +589,11 @@ function Update-AppUIList {
         # Badge trạng thái tài khoản
         $statusPanel = New-Object System.Windows.Controls.StackPanel
         $statusPanel.Orientation = "Horizontal"; $statusPanel.Margin = "0,0,0,10"
+        $statusPanel.Tag = $profileDir
         $statusDot = New-Object System.Windows.Controls.TextBlock
+        $statusDot.Name = "StatusDot"
         $statusLabel = New-Object System.Windows.Controls.TextBlock
+        $statusLabel.Name = "StatusLabel"
         $statusLabel.FontSize = 11; $statusLabel.VerticalAlignment = "Center"; $statusLabel.Margin = "5,0,0,0"
         if ($isRunning) {
             $activeCount++
@@ -718,10 +721,47 @@ Repair-OldShortcuts
 Update-AppUIList
 $Global:TxtVersion.Text = "Phiên bản $Global:Version"
 
+# --- HÀM LÀM MỚI TRẠNG THÁI NHẸ (không rebuild UI) ---
+function Refresh-StatusOnly {
+    $profiles = Get-ChildItem $Global:ProfileRoot -ErrorAction SilentlyContinue | Where-Object { $_.PSIsContainer } | Sort-Object CreationTime
+    $activeCount = 0
+    $totalCount = 0
+    foreach ($p in $profiles) {
+        $totalCount++
+        $profileDir = $p.FullName
+        $isRunning = Get-AccountStatus $profileDir
+        if ($isRunning) { $activeCount++ }
+    }
+    # Tìm và cập nhật từng statusPanel đã gắn Tag
+    foreach ($border in $Global:InstanceGrid.Children) {
+        if ($border -is [System.Windows.Controls.Border] -and $border.Child) {
+            $stack = $border.Child
+            foreach ($child in $stack.Children) {
+                if ($child -is [System.Windows.Controls.StackPanel] -and $child.Tag) {
+                    $dir = $child.Tag
+                    $running = Get-AccountStatus $dir
+                    $dot = $child.Children[0]
+                    $label = $child.Children[1]
+                    if ($running) {
+                        $dot.Foreground = [System.Windows.Media.Brushes]::LimeGreen
+                        $label.Text = "Đang hoạt động"
+                        $label.Foreground = [System.Windows.Media.Brushes]::LimeGreen
+                    } else {
+                        $dot.Foreground = [System.Windows.Media.Brushes]::Gray
+                        $label.Text = "Chưa mở"
+                        $label.SetResourceReference([System.Windows.Controls.TextBlock]::ForegroundProperty, "TextSec")
+                    }
+                }
+            }
+        }
+    }
+    $Global:TxtVersion.Text = "Phiên bản $Global:Version • $activeCount/$totalCount đang mở"
+}
+
 # --- TỰ ĐỘNG LÀM MỚI TRẠNG THÁI MỖI 5 GIÂY ---
 $Global:RefreshTimer = New-Object System.Windows.Threading.DispatcherTimer
 $Global:RefreshTimer.Interval = [TimeSpan]::FromSeconds(5)
-$Global:RefreshTimer.Add_Tick({ Update-AppUIList })
+$Global:RefreshTimer.Add_Tick({ Refresh-StatusOnly })
 $Global:RefreshTimer.Start()
 
 $Global:window.ShowDialog() | Out-Null
