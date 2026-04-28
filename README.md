@@ -1,4 +1,4 @@
-# 🚀 ZalỏMulti - Quản lý đa tài khoản Zalo Desktop (v2.0.0)
+# 🚀 ZalỏMulti - Quản lý đa tài khoản Zalo Desktop (v2.0.1)
 
 **ZalỏMulti** là một công cụ mạnh mẽ, gọn nhẹ và thẩm mỹ dành cho người dùng Windows, giúp quản lý và chạy đồng thời nhiều tài khoản Zalo Desktop trên cùng một máy tính một cách dễ dàng.
 
@@ -14,6 +14,13 @@
   <img src="Assets/zalo_09_Nau.ico" width="48" height="48" alt="Nâu" />
   <img src="Assets/zalo_10_XamBac.ico" width="48" height="48" alt="Xám bạc" />
 </p>
+
+## ✨ Tính năng mới (Cập nhật 28/04/2026 - v2.0.1)
+
+- **Sửa lỗi Shortcut tiếng Việt (triệt để)**: Khắc phục hoàn toàn lỗi `Unable to save shortcut` khi tên tài khoản có dấu tiếng Việt (ả, ạ, ồ, ể...). File Shortcut giờ dùng tên không dấu để tương thích mọi Windows locale.
+- **Tối ưu encoding**: Thêm `chcp 65001` vào file `.bat` trung gian và dùng `UTF-8 no BOM` cho file `.bat`, `UTF-8 BOM` cho file `.ps1`.
+- **Tự động sửa Shortcut cũ**: Ứng dụng tự phát hiện và sửa các file `.bat` cũ thiếu encoding UTF-8 khi khởi động.
+- **Dọn dẹp thông minh**: Khi xóa/đổi tên tài khoản, tự dọn cả file Shortcut cũ (tên có dấu từ bản trước).
 
 ## ✨ Tính năng mới (Cập nhật 28/04/2026 - v2.0.0)
 

@@ -1,5 +1,4 @@
-- Tự động làm mới trạng thái 🟢/⚫ mỗi 5 giây.
-- Hiện số tài khoản đang mở ngay trên thanh phiên bản.
-- Xóa tài khoản thông minh: chỉ đóng Zalo của profile đó, không đóng tất cả.
-- Loại bỏ ZaloTransfer.ps1 (chức năng đã tích hợp sẵn).
-- Sửa lỗi cú pháp here-string, đảm bảo file luôn lưu UTF-8 BOM.
+- Sửa lỗi tạo Shortcut bị lỗi khi tên tài khoản có dấu tiếng Việt (ả, ạ, ể, ồ...).
+- File Shortcut giờ dùng tên không dấu để tương thích mọi Windows locale.
+- Thêm chcp 65001 vào file .bat để đảm bảo UTF-8 khi khởi chạy.
+- Tự động sửa các file .bat cũ thiếu encoding UTF-8.

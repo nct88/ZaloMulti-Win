@@ -25,7 +25,7 @@ trap {
 }
 
 # Cấu hình toàn cầu
-$Global:Version = "2.0.0" # Phiên bản hoàn thiện
+$Global:Version = "2.0.1" # Sửa lỗi Shortcut tiếng Việt
 $Global:AppPath = $PSScriptRoot
 $Global:IconFolder = Join-Path $Global:AppPath "Assets"
 $Global:FontPath = "file:///$($Global:AppPath.Replace('\','/'))/Assets/#Pin-Sans-Regular"
@@ -296,24 +296,45 @@ function Update-AppAccent {
     } catch { }
 }
 
+function Remove-Diacritics {
+    param([string]$text)
+    $normalized = $text.Normalize([System.Text.NormalizationForm]::FormD)
+    $sb = New-Object System.Text.StringBuilder
+    foreach ($c in $normalized.ToCharArray()) {
+        $cat = [System.Globalization.CharUnicodeInfo]::GetUnicodeCategory($c)
+        if ($cat -ne [System.Globalization.UnicodeCategory]::NonSpacingMark) {
+            [void]$sb.Append($c)
+        }
+    }
+    # Xử lý thêm ký tự đặc biệt tiếng Việt mà Normalize không xử lý hết
+    $result = $sb.ToString()
+    $result = $result -replace 'đ','d' -replace 'Đ','D'
+    return $result
+}
+
 function New-AppShortcut {
     param($name, $index)
     try {
         $desktopPath = [Environment]::GetFolderPath("Desktop")
-        $ShortcutPath = Join-Path $desktopPath "$name.lnk"
+        # Tạo tên file an toàn (không dấu) cho .lnk và .bat vì WScript.Shell dùng ANSI
+        $safeName = Remove-Diacritics $name
+        $ShortcutPath = Join-Path $desktopPath "$safeName.lnk"
         $batFolder = Join-Path $Global:AppPath "Shortcuts"
         if (-not (Test-Path $batFolder)) { New-Item -ItemType Directory -Path $batFolder -Force | Out-Null }
-        $batPath = Join-Path $batFolder "$name.bat"
+        $batPath = Join-Path $batFolder "$safeName.bat"
         
         $scriptPath = Join-Path $Global:AppPath "ZaloMulti.ps1"
-        $batContent = "@echo off`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`" -LaunchInstance `"$name`""
-        $batContent | Set-Content $batPath -Force -Encoding UTF8
+        # Nội dung .bat vẫn giữ tên gốc (có dấu) trong tham số -LaunchInstance
+        $batContent = "@echo off`nchcp 65001 >nul`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`" -LaunchInstance `"$name`""
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($batPath, $batContent, $utf8NoBom)
 
         $WshShell = New-Object -ComObject WScript.Shell
         $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
         $Shortcut.TargetPath = "cmd.exe"
         $Shortcut.Arguments = "/c `"$batPath`""
         $Shortcut.WindowStyle = 7
+        $Shortcut.Description = $name
         
         if (Test-Path $Global:IconFolder) {
             $icons = Get-ChildItem $Global:IconFolder -Filter *.ico | Sort-Object Name
@@ -485,14 +506,18 @@ function Repair-OldShortcuts {
     $batFiles = Get-ChildItem $batFolder -Filter *.bat -ErrorAction SilentlyContinue
     foreach ($bat in $batFiles) {
         $content = Get-Content $bat.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
-        # Nếu file .bat chứa mã nguồn hàm (dấu hiệu bị lỗi) hoặc không bắt đầu bằng @echo off
-        $isBroken = ($content -match "param\(") -or ($content -match "try \{") -or (-not ($content -match "^@echo off"))
+        # Nếu file .bat chứa mã nguồn hàm (dấu hiệu bị lỗi) hoặc không bắt đầu bằng @echo off hoặc thiếu chcp 65001
+        $isBroken = ($content -match "param\(") -or ($content -match "try \{") -or (-not ($content -match "^@echo off")) -or (-not ($content -match "chcp 65001"))
         if ($isBroken) {
-            # Lấy tên tài khoản từ tên file .bat
+            # Tìm tên tài khoản gốc từ nội dung .bat (lấy từ -LaunchInstance)
             $accountName = [System.IO.Path]::GetFileNameWithoutExtension($bat.Name)
+            if ($content -match '-LaunchInstance\s+\"([^\"]+)\"') {
+                $accountName = $Matches[1]
+            }
             # Tạo lại nội dung .bat đúng
-            $fixedContent = "@echo off`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`" -LaunchInstance `"$accountName`""
-            $fixedContent | Set-Content $bat.FullName -Force -Encoding UTF8
+            $fixedContent = "@echo off`nchcp 65001 >nul`nstart `"`" powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$scriptPath`" -LaunchInstance `"$accountName`""
+            $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+            [System.IO.File]::WriteAllText($bat.FullName, $fixedContent, $utf8NoBom)
         }
     }
 }
@@ -559,11 +584,17 @@ function Update-AppUIList {
                     }
                     Start-Sleep -Milliseconds 500
                     Remove-Item -Path (Join-Path $Global:ProfileRoot $targetName) -Recurse -Force
-                    # Xóa Shortcut liên quan
-                    $batPath = Join-Path (Join-Path $Global:AppPath "Shortcuts") "$targetName.bat"
-                    $lnkPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "$targetName.lnk"
+                    # Xóa Shortcut liên quan (dùng tên không dấu)
+                    $safeTarget = Remove-Diacritics $targetName
+                    $batPath = Join-Path (Join-Path $Global:AppPath "Shortcuts") "$safeTarget.bat"
+                    $lnkPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "$safeTarget.lnk"
                     if (Test-Path $batPath) { Remove-Item $batPath -Force -ErrorAction SilentlyContinue }
                     if (Test-Path $lnkPath) { Remove-Item $lnkPath -Force -ErrorAction SilentlyContinue }
+                    # Dọn luôn file cũ nếu có (tên có dấu từ bản trước)
+                    $oldBat = Join-Path (Join-Path $Global:AppPath "Shortcuts") "$targetName.bat"
+                    $oldLnk = Join-Path ([Environment]::GetFolderPath("Desktop")) "$targetName.lnk"
+                    if (Test-Path $oldBat) { Remove-Item $oldBat -Force -ErrorAction SilentlyContinue }
+                    if (Test-Path $oldLnk) { Remove-Item $oldLnk -Force -ErrorAction SilentlyContinue }
                     Update-AppUIList
                 } catch { [System.Windows.MessageBox]::Show("Lỗi: $($_.Exception.Message)") }
             }
@@ -576,12 +607,18 @@ function Update-AppUIList {
             if ($newName -and $newName -ne $oldName.ToUpper()) {
                 if (-not (Test-Path (Join-Path $Global:ProfileRoot $newName))) {
                     Rename-Item -Path (Join-Path $Global:ProfileRoot $oldName) -NewName $newName -Force
-                    # Cập nhật Shortcut khi đổi tên
+                    # Cập nhật Shortcut khi đổi tên (dùng tên không dấu)
                     $batFolder = Join-Path $Global:AppPath "Shortcuts"
-                    $oldBat = Join-Path $batFolder "$oldName.bat"
-                    $oldLnk = Join-Path ([Environment]::GetFolderPath("Desktop")) "$oldName.lnk"
+                    $safeOld = Remove-Diacritics $oldName
+                    $oldBat = Join-Path $batFolder "$safeOld.bat"
+                    $oldLnk = Join-Path ([Environment]::GetFolderPath("Desktop")) "$safeOld.lnk"
                     if (Test-Path $oldBat) { Remove-Item $oldBat -Force -ErrorAction SilentlyContinue }
                     if (Test-Path $oldLnk) { Remove-Item $oldLnk -Force -ErrorAction SilentlyContinue }
+                    # Dọn luôn file cũ nếu có (tên có dấu từ bản trước)
+                    $oldBatVn = Join-Path $batFolder "$oldName.bat"
+                    $oldLnkVn = Join-Path ([Environment]::GetFolderPath("Desktop")) "$oldName.lnk"
+                    if (Test-Path $oldBatVn) { Remove-Item $oldBatVn -Force -ErrorAction SilentlyContinue }
+                    if (Test-Path $oldLnkVn) { Remove-Item $oldLnkVn -Force -ErrorAction SilentlyContinue }
                     Update-AppUIList
                 }
             }
