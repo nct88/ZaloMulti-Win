@@ -1,4 +1,4 @@
-# 🚀 ZalỏMulti - Quản lý đa tài khoản Zalo Desktop (v2.0.2)
+# 🚀 ZalỏMulti - Quản lý đa tài khoản Zalo Desktop
 
 <p align="center">
   <img src="Assets/zalo_01_Do.ico" width="64" height="64" alt="ZaloMulti" />
