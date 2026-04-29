@@ -460,15 +460,8 @@ function Start-ZaloInstance {
         $zuContent | Set-Content $zuFile -Force -Encoding ASCII
     }
 
-    # Chỉ tạo deviceId khi chưa có (tránh Zalo coi là thiết bị mới)
-    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    # [REMOVED v2.0.4] Khong tao storage.json - Zalo tu tao device identity
     # [REMOVED v2.0.4] Zalo tu tao device identity - khong can tao storage.json
-    # $storagePath = Join-Path $zaloDataPath "storage.json"
-    if (-not (Test-Path $storagePath)) {
-        $deviceId = [System.Guid]::NewGuid().ToString().ToUpper()
-        $storageContent = @{ deviceId = $deviceId } | ConvertTo-Json -Compress
-        [System.IO.File]::WriteAllText($storagePath, $storageContent, $utf8NoBom)
-    }
 
     $configPath = Join-Path $zaloDataPath "config.json"
     if (-not (Test-Path $configPath)) {
