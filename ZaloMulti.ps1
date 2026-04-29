@@ -134,7 +134,8 @@ if ($launchIdx -ge 0) {
 
             # Chỉ tạo deviceId khi chưa có (tránh Zalo coi là thiết bị mới)
             $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-            $storagePath = Join-Path $zaloDataPath "storage.json"
+            # [REMOVED v2.0.4] Zalo tu tao device identity - khong can tao storage.json
+    # $storagePath = Join-Path $zaloDataPath "storage.json"
             if (-not (Test-Path $storagePath)) {
                 $deviceId = [System.Guid]::NewGuid().ToString().ToUpper()
                 $storageContent = @{ deviceId = $deviceId } | ConvertTo-Json -Compress
@@ -469,7 +470,8 @@ function Start-ZaloInstance {
 
     # Chỉ tạo deviceId khi chưa có (tránh Zalo coi là thiết bị mới)
     $utf8NoBom = New-Object System.Text.UTF8Encoding $false
-    $storagePath = Join-Path $zaloDataPath "storage.json"
+    # [REMOVED v2.0.4] Zalo tu tao device identity - khong can tao storage.json
+    # $storagePath = Join-Path $zaloDataPath "storage.json"
     if (-not (Test-Path $storagePath)) {
         $deviceId = [System.Guid]::NewGuid().ToString().ToUpper()
         $storageContent = @{ deviceId = $deviceId } | ConvertTo-Json -Compress
