@@ -23,3 +23,5 @@ lessons_learned.md
 # OS files
 Thumbs.db
 Desktop.ini
+
+*.exe

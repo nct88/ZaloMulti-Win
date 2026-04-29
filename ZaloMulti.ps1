@@ -25,7 +25,7 @@ trap {
 }
 
 # Cấu hình toàn cầu
-$Global:Version = "2.0.3" # Fix sao lưu, pin to Start, đồng bộ ĐT
+$Global:Version = "2.0.4" # Fix sao lưu, pin to Start, đồng bộ ĐT
 $Global:AppPath = $PSScriptRoot
 $Global:IconFolder = Join-Path $Global:AppPath "Assets"
 $Global:FontPath = "file:///$($Global:AppPath.Replace('\','/'))/Assets/#Pin-Sans-Regular"
@@ -155,8 +155,20 @@ if ($launchIdx -ge 0) {
             $processInfo.EnvironmentVariables["APPDATA"] = $roamingPath
             $processInfo.EnvironmentVariables["LOCALAPPDATA"] = $localPath
             try {
-                $proc = [System.Diagnostics.Process]::Start($processInfo)
-                if ($proc) { $proc.Id | Set-Content (Join-Path $profilePath "pid.txt") -Force -Encoding ASCII }
+                # Ghi nhan PID Zalo hien co TRUOC khi mo
+        $existingPids = @()
+        $existingProcs = Get-Process -Name "Zalo" -ErrorAction SilentlyContinue
+        if ($existingProcs) { $existingPids = @($existingProcs | ForEach-Object { $_.Id }) }
+
+        $proc = [System.Diagnostics.Process]::Start($processInfo)
+                if ($proc) { # Cho Electron spawn child processes (3 giay)
+                Start-Sleep -Milliseconds 3000
+                $allProcs = Get-Process -Name "Zalo" -ErrorAction SilentlyContinue
+                $newPids = @()
+                if ($allProcs) { $newPids = @($allProcs | Where-Object { $_.Id -notin $existingPids } | ForEach-Object { $_.Id }) }
+                $pidPath = Join-Path $profilePath "pid.txt"
+                if ($newPids.Count -gt 0) { ($newPids -join ",") | Set-Content $pidPath -Force -Encoding ASCII }
+                else { $proc.Id | Set-Content $pidPath -Force -Encoding ASCII } }
             } catch { }
         }
         exit
@@ -479,10 +491,22 @@ function Start-ZaloInstance {
     $processInfo.EnvironmentVariables["LOCALAPPDATA"] = $localPath
     
     try {
+        # Ghi nhan PID Zalo hien co TRUOC khi mo
+        $existingPids = @()
+        $existingProcs = Get-Process -Name "Zalo" -ErrorAction SilentlyContinue
+        if ($existingProcs) { $existingPids = @($existingProcs | ForEach-Object { $_.Id }) }
+
         $proc = [System.Diagnostics.Process]::Start($processInfo)
         # Lưu PID để theo dõi trạng thái
         if ($proc) {
-            $proc.Id | Set-Content (Join-Path $profilePath "pid.txt") -Force -Encoding ASCII
+            # Cho Electron spawn child processes (3 giay)
+                Start-Sleep -Milliseconds 3000
+                $allProcs = Get-Process -Name "Zalo" -ErrorAction SilentlyContinue
+                $newPids = @()
+                if ($allProcs) { $newPids = @($allProcs | Where-Object { $_.Id -notin $existingPids } | ForEach-Object { $_.Id }) }
+                $pidPath = Join-Path $profilePath "pid.txt"
+                if ($newPids.Count -gt 0) { ($newPids -join ",") | Set-Content $pidPath -Force -Encoding ASCII }
+                else { $proc.Id | Set-Content $pidPath -Force -Encoding ASCII }
         }
     } catch {
         [System.Windows.MessageBox]::Show("Không thể khởi chạy Zalo: $($_.Exception.Message)", "Lỗi", 0, 16)

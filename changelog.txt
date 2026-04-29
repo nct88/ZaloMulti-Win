@@ -1,4 +1,1 @@
-﻿v2.0.3 - Fix sao luu, Pin to Start, dong bo DT
-- Sua loi sao luu file .zlp bi bao loi .zip
-- Ho tro Pin to Start cho shortcut nhan ban
-- Khong ghi de deviceId moi lan mo -> dong bo DT on dinh
+﻿v2.0.4: Fix theo doi trang thai tai khoan, ho tro nhieu PID Electron
