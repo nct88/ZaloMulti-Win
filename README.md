@@ -51,7 +51,7 @@
 
 ## 🚀 Hướng dẫn sử dụng
 
-1. **Tải về**: Tải toàn bộ thư mục từ [GitHub]([https://github.com/nct88/ZaloMulti-Win](https://github.com/nct88/ZaloMulti-Win/archive/refs/heads/main.zip)).
+1. **Tải về**: Tải toàn bộ thư mục từ [GitHub]([https://github.com/nct88/ZaloMulti-Win/archive/refs/heads/main.zip]).
 2. **Khởi chạy**: Nhấn đúp vào file `ZaloMulti.bat`.
 3. **Thêm tài khoản**: Nhấn "Thêm tài khoản", nhập tên và bắt đầu sử dụng.
 4. **Mở Zalo**: Nhấn "MỞ TÀI KHOẢN" trên thẻ tương ứng.
