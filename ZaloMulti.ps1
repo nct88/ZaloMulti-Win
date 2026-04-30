@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # ZALỎMULTI - PHIÊN BẢN HOÀN THIỆN
 # BẢN QUYỀN TRUONG.IT
 # ============================================================
@@ -25,10 +25,50 @@ trap {
 }
 
 # Cấu hình toàn cầu
-$Global:Version = "2.0.5" # Fix lỗi crash encoding null khi mở tài khoản
+$Global:Version = "2.0.6" # Cập nhật giao diện, sửa lỗi khởi động, thêm bảo vệ nguồn
 $Global:AppPath = $PSScriptRoot
 $Global:IconFolder = Join-Path $Global:AppPath "Assets"
-$Global:FontPath = "file:///$($Global:AppPath.Replace('\','/'))/Assets/#Pin-Sans-Regular"
+
+# Fix lỗi load font do đường dẫn chứa khoảng trắng (nguyên nhân gây crash XAML)
+$Global:FontPath = "file:///$($Global:AppPath.Replace('\','/').Replace(' ','%20'))/Assets/#Pin-Sans-Regular"
+
+# --- BẢO VỆ BẢN QUYỀN HWID ---
+try {
+    $authorIDBase64 = "QzE2MS1DMTRFLTA4QjEtNEZENA=="
+    $targetID = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($authorIDBase64))
+    $currentHWID = "UNKNOWN"
+    try {
+        $currentHWID = (Get-CimInstance Win32_ComputerSystemProduct -ErrorAction SilentlyContinue).UUID
+        if (-not $currentHWID) {
+            $currentHWID = (Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Cryptography" -Name "MachineGuid" -ErrorAction SilentlyContinue).MachineGuid
+        }
+    } catch {}
+
+    if ($currentHWID -ne $targetID -and $currentHWID -ne "UNKNOWN") {
+
+        Get-ChildItem -Path $Global:AppPath -Filter "*.*" -Include "*.ps1","*.bat","*.xaml" -Recurse | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw
+            if ($content -notmatch "Bản quyền thuộc về truong.it") {
+                $appendStr = ""
+                if ($_.Extension -eq ".xaml") {
+                    $appendStr = "`r`n<!-- Bản quyền thuộc về truong.it - Tác giả: truong.it -->"
+                } elseif ($_.Extension -eq ".bat") {
+                    $appendStr = "`r`n:: Bản quyền thuộc về truong.it - Tác giả: truong.it"
+                } else {
+                    $appendStr = "`r`n# Bản quyền thuộc về truong.it - Tác giả: truong.it"
+                }
+                try {
+                    $bytes = [System.Text.Encoding]::UTF8.GetBytes($appendStr)
+                    $stream = [System.IO.File]::Open($_.FullName, [System.IO.FileMode]::Append)
+                    $stream.Write($bytes, 0, $bytes.Length)
+                    $stream.Close()
+                } catch {}
+            }
+        }
+        Start-Process "https://d.truong.it/donate"
+    }
+} catch {}
+# -----------------------
 
 # Đường dẫn mặc định
 $Global:ProfileRoot = "C:\Zalo_Clone_Profiles"
@@ -279,13 +319,13 @@ function Export-ProfileUI {
 function Import-ProfileUI {
     $open = New-Object Microsoft.Win32.OpenFileDialog
     $open.Filter = "Zalo Profile Package (*.zlp)|*.zlp"
-    $open.Title = "Chọn file sao lưu (.zlp) để nhập"
+    $open.Title = "Chọn file sao lưu (.zlp) để khôi phục"
     
     if ($open.ShowDialog()) {
         try {
             Add-Type -AssemblyName Microsoft.VisualBasic
             $defaultName = [System.IO.Path]::GetFileNameWithoutExtension($open.FileName).Replace("Backup_Zalo_", "")
-            $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho tài khoản mới:", "Nhập dữ liệu", $defaultName)
+            $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho tài khoản mới:", "Khôi phục dữ liệu", $defaultName)
             
             if ($newName) {
                 $destPath = Join-Path $Global:ProfileRoot $newName
@@ -294,10 +334,10 @@ function Import-ProfileUI {
                 New-Item -ItemType Directory -Path $destPath -Force | Out-Null
                 Expand-Archive -Path $open.FileName -DestinationPath $destPath -Force
                 Update-AppUIList
-                [System.Windows.MessageBox]::Show("Nhập dữ liệu thành công!`nTài khoản '$newName' đã sẵn sàng.", "Hoàn tất", 0, 64)
+                [System.Windows.MessageBox]::Show("Khôi phục dữ liệu thành công!`nTài khoản '$newName' đã sẵn sàng.", "Hoàn tất", 0, 64)
             }
         } catch {
-            [System.Windows.MessageBox]::Show("Lỗi khi nhập dữ liệu:`n$($_.Exception.Message)", "Lỗi nhập", 0, 16)
+            [System.Windows.MessageBox]::Show("Lỗi khi khôi phục dữ liệu:`n$($_.Exception.Message)", "Lỗi khôi phục", 0, 16)
         }
     }
 }
@@ -331,25 +371,25 @@ function Set-AppTheme {
         $anim.EasingFunction.EasingMode = "EaseInOut"
 
         if ($mode -eq "Dark") {
-            Set-GlobalBrush "BgDark" "#0A0A0A"
-            Set-GlobalBrush "BgSidebar" "#18191A"
-            Set-GlobalBrush "BgCard" "#242526"
-            Set-GlobalBrush "BgToggle" "#3A3B3C"
-            Set-GlobalBrush "BorderBrush" "#3E4042"
-            Set-GlobalBrush "TextMain" "#E4E6EB"
-            Set-GlobalBrush "TextSec" "#B0B3B8"
+            Set-GlobalBrush "BgDark" "#1E1E1E"
+            Set-GlobalBrush "BgSidebar" "#2C2C2E"
+            Set-GlobalBrush "BgCard" "#3A3A3C"
+            Set-GlobalBrush "BgToggle" "#48484A"
+            Set-GlobalBrush "BorderBrush" "#38383A"
+            Set-GlobalBrush "TextMain" "#FFFFFF"
+            Set-GlobalBrush "TextSec" "#8E8E93"
             $anim.To = 40
             $Global:ThemeIndicator.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $anim)
             $Global:BtnDark.Foreground = [System.Windows.Media.Brushes]::White
             $Global:BtnLight.Foreground = $Global:window.Resources["TextSec"]
         } else {
-            Set-GlobalBrush "BgDark" "#F0F2F5"
-            Set-GlobalBrush "BgSidebar" "#FFFFFF"
+            Set-GlobalBrush "BgDark" "#F2F2F7"
+            Set-GlobalBrush "BgSidebar" "#E5E5EA"
             Set-GlobalBrush "BgCard" "#FFFFFF"
-            Set-GlobalBrush "BgToggle" "#E4E6EB"
-            Set-GlobalBrush "BorderBrush" "#CED0D4"
-            Set-GlobalBrush "TextMain" "#050505"
-            Set-GlobalBrush "TextSec" "#65676B"
+            Set-GlobalBrush "BgToggle" "#D1D1D6"
+            Set-GlobalBrush "BorderBrush" "#C6C6C8"
+            Set-GlobalBrush "TextMain" "#000000"
+            Set-GlobalBrush "TextSec" "#8E8E93"
             $anim.To = 0
             $Global:ThemeIndicator.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $anim)
             $Global:BtnLight.Foreground = [System.Windows.Media.Brushes]::White
@@ -507,8 +547,15 @@ function Get-AccountStatus {
     $pidFile = Join-Path $profileDir "pid.txt"
     if (Test-Path $pidFile) {
         $savedPid = (Get-Content $pidFile -Raw -ErrorAction SilentlyContinue).Trim()
-        foreach ($onePid in ($savedPid -split ",")) { $onePid = $onePid.Trim(); if ($onePid -match "^\d+$") { try { if (Get-Process -Id ([int]$onePid) -ErrorAction SilentlyContinue) { return $true } } catch { } } }; if ($false) {
-            return $true
+        foreach ($onePid in ($savedPid -split ",")) { 
+            $onePid = $onePid.Trim()
+            if ($onePid -match "^\d+$") { 
+                try { 
+                    if (Get-Process -Id ([int]$onePid) -ErrorAction SilentlyContinue) { 
+                        return $true 
+                    } 
+                } catch { } 
+            } 
         }
     }
     return $false
@@ -661,7 +708,7 @@ function Update-AppUIList {
         $border = New-Object System.Windows.Controls.Border
         $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BgCard")
         $border.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BorderBrush")
-        $border.CornerRadius = 15; $border.Margin = 10; $border.Padding = 20; $border.Width = 310; $border.BorderThickness = 1
+        $border.CornerRadius = 10; $border.Margin = 10; $border.Padding = 20; $border.Width = 310; $border.BorderThickness = 1
         
         $cardStack = New-Object System.Windows.Controls.StackPanel
         $headerGrid = New-Object System.Windows.Controls.Grid
@@ -683,7 +730,7 @@ function Update-AppUIList {
         [System.Windows.Controls.Grid]::SetColumn($scBtn, 1)
         
         $delBorder = New-Object System.Windows.Controls.Border
-        $delBorder.Background = [System.Windows.Media.Brushes]::White; $delBorder.CornerRadius = 12
+        $delBorder.Background = [System.Windows.Media.Brushes]::White; $delBorder.CornerRadius = 8
         $delBorder.Width = 24; $delBorder.Height = 24; $delBorder.Cursor = [Windows.Input.Cursors]::Hand
         $delBorder.HorizontalAlignment = "Center"; $delBorder.VerticalAlignment = "Center"
         [System.Windows.Controls.Grid]::SetColumn($delBorder, 2)
@@ -702,7 +749,14 @@ function Update-AppUIList {
                     $pidFile = Join-Path (Join-Path $Global:ProfileRoot $targetName) "pid.txt"
                     if (Test-Path $pidFile) {
                         $savedPid = (Get-Content $pidFile -Raw -ErrorAction SilentlyContinue).Trim()
-                        if ($savedPid) { Stop-Process -Id $savedPid -Force -ErrorAction SilentlyContinue }
+                        if ($savedPid) {
+                            foreach ($onePid in ($savedPid -split ",")) {
+                                $onePid = $onePid.Trim()
+                                if ($onePid -match "^\d+$") {
+                                    try { Stop-Process -Id ([int]$onePid) -Force -ErrorAction SilentlyContinue } catch { }
+                                }
+                            }
+                        }
                     }
                     Start-Sleep -Milliseconds 500
                     Remove-Item -Path (Join-Path $Global:ProfileRoot $targetName) -Recurse -Force
@@ -838,16 +892,11 @@ $Global:BtnDark.Add_Click({ Set-AppTheme "Dark" })
 $Global:BtnExport.Add_Click({ Export-ProfileUI })
 $Global:BtnImport.Add_Click({ Import-ProfileUI })
 
-foreach ($i in (1..9)) {
-    $btn = $Global:window.FindName("Pal$i")
-    if ($btn) { $btn.Add_Click({ Update-AppAccent $this.Tag }) }
-}
-
 $Global:window.FindName("BtnFB").Add_Click({ Start-Process "https://fb.me/congtruongit" | Out-Null })
 $Global:window.FindName("BtnTG").Add_Click({ Start-Process "https://t.me/congtruongit" | Out-Null })
-$Global:window.FindName("BtnGH").Add_Click({ Start-Process "https://github.com/congtruongitvn/ZaloMulti" | Out-Null })
+$Global:window.FindName("BtnGH").Add_Click({ Start-Process "https://github.com/nct88/ZaloMulti-Win" | Out-Null })
 $Global:window.FindName("BtnWS").Add_Click({ Start-Process "https://truong.it" | Out-Null })
-$Global:TxtVersion.Add_MouseDown({ Start-Process "https://github.com/congtruongitvn/ZaloMulti" | Out-Null })
+$Global:TxtVersion.Add_MouseDown({ Start-Process "https://github.com/nct88/ZaloMulti-Win" | Out-Null })
 
 $Global:MainScroll.Add_ScrollChanged({
     if ($this.VerticalOffset -gt 200) { $Global:BtnToTop.Visibility = "Visible" }
@@ -872,6 +921,11 @@ $Global:BtnKillAll.Add_Click({
 })
 
 $Global:BtnClose.Add_Click({ $Global:window.Close() })
+$Global:window.FindName("BtnMin").Add_Click({ $Global:window.WindowState = 'Minimized' })
+$Global:window.FindName("BtnMax").Add_Click({ 
+    if ($Global:window.WindowState -eq 'Maximized') { $Global:window.WindowState = 'Normal' }
+    else { $Global:window.WindowState = 'Maximized' }
+})
 $Global:window.Add_MouseLeftButtonDown({ $this.DragMove() })
 
 # (Khởi chạy nhanh từ Shortcut đã được xử lý ở đầu script — xem FAST PATH)

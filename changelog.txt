@@ -1,1 +1,3 @@
-v2.0.5: Fix loi crash khi mo Zalo Clone (Value cannot be null: encoding)
+- Nâng cấp giao diện sáng tối và nút bấm chuẩn macOS
+- Biên dịch tệp thực thi ZaloMulti.exe và đóng gói lại
+Sửa lỗi crash font, tối ưu giao diện Sáng/Tối, nâng cấp bảo mật

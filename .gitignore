@@ -1,26 +1,26 @@
-# ZaloMulti GitIgnore
+# Bá» qua cÃ¡c tá»‡p khÃ´ng cáº§n thiáº¿t (ZaloMulti GitIgnore)
 
-# Dữ liệu cá nhân & cấu hình riêng máy
+# DÃ¡Â»Â¯ liÃ¡Â»â€¡u cÃƒÂ¡ nhÃƒÂ¢n & cÃ¡ÂºÂ¥u hÃƒÂ¬nh riÃƒÂªng mÃƒÂ¡y
 settings.json
 custom_path.txt
 desktop_profiles.json
 profiles_config.json
 
-# Thư mục chứa file .bat sinh tự động
+# ThÃ†Â° mÃ¡Â»Â¥c chÃ¡Â»Â©a file .bat sinh tÃ¡Â»Â± Ã„â€˜Ã¡Â»â„¢ng
 Shortcuts/
 
-# Ghi chú nội bộ
+# Ghi chÃƒÂº nÃ¡Â»â„¢i bÃ¡Â»â„¢
 lessons_learned.md
 
-# PowerShell temporary files
+# Tá»‡p táº¡m cá»§a PowerShell
 *.log
 *.tmp
 
-# IDE Settings
+# Cáº¥u hÃ¬nh trÃ¬nh chá»‰nh sá»­a code (IDE)
 .vscode/
 .gemini/
 
-# OS files
+# Tá»‡p rÃ¡c cá»§a há»‡ Ä‘iá»u hÃ nh
 Thumbs.db
 Desktop.ini
 
