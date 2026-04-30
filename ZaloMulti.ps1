@@ -374,25 +374,25 @@ function Set-AppTheme {
         $anim.EasingFunction.EasingMode = "EaseInOut"
 
         if ($mode -eq "Dark") {
-            Set-GlobalBrush "BgDark" "#0A0A0A"
-            Set-GlobalBrush "BgSidebar" "#18191A"
-            Set-GlobalBrush "BgCard" "#242526"
-            Set-GlobalBrush "BgToggle" "#3A3B3C"
-            Set-GlobalBrush "BorderBrush" "#3E4042"
+            Set-GlobalBrush "BgDark" "#1E1E1E"
+            Set-GlobalBrush "BgSidebar" "#2C2C2E"
+            Set-GlobalBrush "BgCard" "#3A3A3C"
+            Set-GlobalBrush "BgToggle" "#48484A"
+            Set-GlobalBrush "BorderBrush" "#38383A"
             Set-GlobalBrush "TextMain" "#FFFFFF"
-            Set-GlobalBrush "TextSec" "#A0A0A0"
+            Set-GlobalBrush "TextSec" "#8E8E93"
             $anim.To = 40
             $Global:ThemeIndicator.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $anim)
             $Global:BtnDark.Foreground = [System.Windows.Media.Brushes]::White
             $Global:BtnLight.Foreground = $Global:window.Resources["TextSec"]
         } else {
-            Set-GlobalBrush "BgDark" "#F0F2F5"
-            Set-GlobalBrush "BgSidebar" "#FFFFFF"
+            Set-GlobalBrush "BgDark" "#F2F2F7"
+            Set-GlobalBrush "BgSidebar" "#E5E5EA"
             Set-GlobalBrush "BgCard" "#FFFFFF"
-            Set-GlobalBrush "BgToggle" "#E4E6EB"
-            Set-GlobalBrush "BorderBrush" "#CED0D4"
-            Set-GlobalBrush "TextMain" "#111111"
-            Set-GlobalBrush "TextSec" "#555555"
+            Set-GlobalBrush "BgToggle" "#D1D1D6"
+            Set-GlobalBrush "BorderBrush" "#C6C6C8"
+            Set-GlobalBrush "TextMain" "#000000"
+            Set-GlobalBrush "TextSec" "#8E8E93"
             $anim.To = 0
             $Global:ThemeIndicator.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::XProperty, $anim)
             $Global:BtnLight.Foreground = [System.Windows.Media.Brushes]::White
@@ -711,7 +711,7 @@ function Update-AppUIList {
         $border = New-Object System.Windows.Controls.Border
         $border.SetResourceReference([System.Windows.Controls.Border]::BackgroundProperty, "BgCard")
         $border.SetResourceReference([System.Windows.Controls.Border]::BorderBrushProperty, "BorderBrush")
-        $border.CornerRadius = 15; $border.Margin = 10; $border.Padding = 20; $border.Width = 310; $border.BorderThickness = 1
+        $border.CornerRadius = 10; $border.Margin = 10; $border.Padding = 20; $border.Width = 310; $border.BorderThickness = 1
         
         $cardStack = New-Object System.Windows.Controls.StackPanel
         $headerGrid = New-Object System.Windows.Controls.Grid
@@ -733,7 +733,7 @@ function Update-AppUIList {
         [System.Windows.Controls.Grid]::SetColumn($scBtn, 1)
         
         $delBorder = New-Object System.Windows.Controls.Border
-        $delBorder.Background = [System.Windows.Media.Brushes]::White; $delBorder.CornerRadius = 12
+        $delBorder.Background = [System.Windows.Media.Brushes]::White; $delBorder.CornerRadius = 8
         $delBorder.Width = 24; $delBorder.Height = 24; $delBorder.Cursor = [Windows.Input.Cursors]::Hand
         $delBorder.HorizontalAlignment = "Center"; $delBorder.VerticalAlignment = "Center"
         [System.Windows.Controls.Grid]::SetColumn($delBorder, 2)
