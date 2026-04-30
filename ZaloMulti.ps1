@@ -322,13 +322,13 @@ function Export-ProfileUI {
 function Import-ProfileUI {
     $open = New-Object Microsoft.Win32.OpenFileDialog
     $open.Filter = "Zalo Profile Package (*.zlp)|*.zlp"
-    $open.Title = "Chọn file sao lưu (.zlp) để nhập"
+    $open.Title = "Chọn file sao lưu (.zlp) để khôi phục"
     
     if ($open.ShowDialog()) {
         try {
             Add-Type -AssemblyName Microsoft.VisualBasic
             $defaultName = [System.IO.Path]::GetFileNameWithoutExtension($open.FileName).Replace("Backup_Zalo_", "")
-            $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho tài khoản mới:", "Nhập dữ liệu", $defaultName)
+            $newName = [Microsoft.VisualBasic.Interaction]::InputBox("Nhập tên cho tài khoản mới:", "Khôi phục dữ liệu", $defaultName)
             
             if ($newName) {
                 $destPath = Join-Path $Global:ProfileRoot $newName
@@ -337,10 +337,10 @@ function Import-ProfileUI {
                 New-Item -ItemType Directory -Path $destPath -Force | Out-Null
                 Expand-Archive -Path $open.FileName -DestinationPath $destPath -Force
                 Update-AppUIList
-                [System.Windows.MessageBox]::Show("Nhập dữ liệu thành công!`nTài khoản '$newName' đã sẵn sàng.", "Hoàn tất", 0, 64)
+                [System.Windows.MessageBox]::Show("Khôi phục dữ liệu thành công!`nTài khoản '$newName' đã sẵn sàng.", "Hoàn tất", 0, 64)
             }
         } catch {
-            [System.Windows.MessageBox]::Show("Lỗi khi nhập dữ liệu:`n$($_.Exception.Message)", "Lỗi nhập", 0, 16)
+            [System.Windows.MessageBox]::Show("Lỗi khi khôi phục dữ liệu:`n$($_.Exception.Message)", "Lỗi khôi phục", 0, 16)
         }
     }
 }

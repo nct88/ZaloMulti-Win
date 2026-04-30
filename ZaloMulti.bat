@@ -29,3 +29,4 @@ if %errorlevel% neq 0 (
     pause
 )
 :: Bản quyền thuộc về truong.it - Tác giả: truong.it
+:: Bản quyền thuộc về truong.it - Tác giả: truong.it
