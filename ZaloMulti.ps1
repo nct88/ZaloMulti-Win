@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # ZALỎMULTI - PHIÊN BẢN HOÀN THIỆN
 # BẢN QUYỀN TRUONG.IT
 # ============================================================
@@ -743,7 +743,14 @@ function Update-AppUIList {
                     $pidFile = Join-Path (Join-Path $Global:ProfileRoot $targetName) "pid.txt"
                     if (Test-Path $pidFile) {
                         $savedPid = (Get-Content $pidFile -Raw -ErrorAction SilentlyContinue).Trim()
-                        if ($savedPid) { Stop-Process -Id $savedPid -Force -ErrorAction SilentlyContinue }
+                        if ($savedPid) {
+                            foreach ($onePid in ($savedPid -split ",")) {
+                                $onePid = $onePid.Trim()
+                                if ($onePid -match "^\d+$") {
+                                    try { Stop-Process -Id ([int]$onePid) -Force -ErrorAction SilentlyContinue } catch { }
+                                }
+                            }
+                        }
                     }
                     Start-Sleep -Milliseconds 500
                     Remove-Item -Path (Join-Path $Global:ProfileRoot $targetName) -Recurse -Force

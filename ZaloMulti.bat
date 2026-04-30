@@ -28,3 +28,5 @@ if %errorlevel% neq 0 (
     echo.
     pause
 )
+
+# Bản quyền thuộc về truong.it - Tác giả: truong.it
